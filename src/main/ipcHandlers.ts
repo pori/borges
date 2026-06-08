@@ -5,9 +5,10 @@ import {
   saveOrderList, readSession, writeSession,
   listMarkets, upsertMarket, deleteMarket,
   listSubmissions, addSubmission, updateSubmission,
-  saveRevision, listRevisions, loadRevision
+  saveRevision, listRevisions, loadRevision,
+  appendTelemetrySession, readTelemetry
 } from './fileSystem'
-import type { Market, Submission, StoryMeta } from './fileSystem'
+import type { Market, Submission, StoryMeta, TelemetrySession } from './fileSystem'
 import { streamMessage, streamPrompt, resetClient } from './aiService'
 import type { AIPayload } from './aiService'
 import { readGlobalConfig, writeGlobalConfig } from './globalConfig'
@@ -47,6 +48,10 @@ export function registerIpcHandlers(): void {
   ipcMain.handle('revisions:save', async (_e, path: string, content: string) => saveRevision(path, content))
   ipcMain.handle('revisions:list', async (_e, path: string) => listRevisions(path))
   ipcMain.handle('revisions:load', async (_e, path: string, id: string) => loadRevision(path, id))
+
+  // ── Telemetry ─────────────────────────────────────────────────────────────────
+  ipcMain.handle('telemetry:append', async (_e, session: TelemetrySession) => appendTelemetrySession(session))
+  ipcMain.handle('telemetry:read', async () => readTelemetry())
 
   // ── Config ────────────────────────────────────────────────────────────────────
   ipcMain.handle('config:read', async () => readGlobalConfig())

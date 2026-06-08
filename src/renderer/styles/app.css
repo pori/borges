@@ -376,6 +376,10 @@ textarea { resize: vertical; }
 .dashboard-row-meta { font-size: 11px; color: var(--text3); flex-shrink: 0; }
 .dashboard-row-flag { font-size: 11px; color: var(--warn); flex-shrink: 0; }
 .dashboard-empty { font-size: 13px; color: var(--text3); padding: 8px 0; }
+.writing-stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px 8px; margin-bottom: 4px; }
+.writing-stat { display: flex; flex-direction: column; gap: 2px; }
+.writing-stat-value { font-size: 22px; font-weight: 300; color: var(--text); line-height: 1; }
+.writing-stat-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text3); }
 
 /* ── Prompt hero ──────────────────────────────────────────────────────────── */
 .prompt-hero {

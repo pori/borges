@@ -1,5 +1,6 @@
 import { useBorgesStore } from '../../store/borgesStore'
 import { PromptHero } from './PromptHero'
+import { WritingStats } from './WritingStats'
 
 function daysSince(iso: string): number {
   return Math.floor((Date.now() - new Date(iso).getTime()) / 86_400_000)
@@ -98,6 +99,9 @@ export function Dashboard(): JSX.Element {
             )
           })}
         </div>
+
+        {/* Writing stats */}
+        <WritingStats stories={stories} />
 
         {/* Word count overview */}
         <div className="dashboard-card">

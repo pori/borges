@@ -78,6 +78,22 @@ const markdownHighlight = HighlightStyle.define([
   { tag: tags.comment, color: 'var(--text3)' },
 ])
 
+const IDLE_MS = 2 * 60 * 1000  // 2 min idle ends active-typing interval
+const SESSION_FLUSH_MS = 10 * 60 * 1000  // 10 min total idle flushes session
+
+function wordCount(text: string): number {
+  return text.trim() === '' ? 0 : text.trim().split(/\s+/).length
+}
+
+function localDate(ts: number): string {
+  const d = new Date(ts)
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
+function shortId(): string {
+  return Math.random().toString(36).slice(2, 9)
+}
+
 export function MarkdownEditor(): JSX.Element {
   const { activeStoryPath, activeStoryContent, activeStoryId,
     annotations, theme, fontSize, revisionPanelOpen, toggleRevisionPanel, revisions, setRevisions } = useBorgesStore()
@@ -86,6 +102,70 @@ export function MarkdownEditor(): JSX.Element {
   const lastPathRef = useRef<string | null>(null)
   const storeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [storyPrompt, setStoryPrompt] = useState<string | null>(null)
+
+  // ── Telemetry session state ──────────────────────────────────────────────────
+  const sessionRef = useRef<{
+    storyId: string
+    startedAt: number
+    wordsStart: number
+    activeMs: number        // accumulated active typing ms
+    intervalStart: number   // start of current active interval
+    lastKeystroke: number   // last doc change timestamp
+  } | null>(null)
+  const flushTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  function flushSession(): void {
+    const s = sessionRef.current
+    if (!s) return
+    const now = Date.now()
+    // Close active interval if still ongoing
+    const activeMs = s.activeMs + (now - s.lastKeystroke < IDLE_MS ? now - s.intervalStart : 0)
+    const wordsEnd = wordCount(useBorgesStore.getState().activeStoryContent)
+    const durationMs = now - s.startedAt
+    const wpm = activeMs > 0 ? Math.round((wordsEnd - s.wordsStart) / (activeMs / 60_000)) : 0
+    sessionRef.current = null
+    if (flushTimerRef.current) { clearTimeout(flushTimerRef.current); flushTimerRef.current = null }
+    // Only persist if something was actually written
+    if (wordsEnd - s.wordsStart <= 0 && durationMs < 5000) return
+    window.api.appendTelemetrySession({
+      id: shortId(),
+      storyId: s.storyId,
+      date: localDate(s.startedAt),
+      startedAt: s.startedAt,
+      endedAt: now,
+      wordsStart: s.wordsStart,
+      wordsEnd,
+      activeMs,
+      wpm: Math.max(0, wpm),
+    })
+  }
+
+  function onDocChanged(storyId: string, content: string): void {
+    const now = Date.now()
+    if (!sessionRef.current || sessionRef.current.storyId !== storyId) {
+      // Start a fresh session
+      flushSession()
+      sessionRef.current = {
+        storyId,
+        startedAt: now,
+        wordsStart: wordCount(content),
+        activeMs: 0,
+        intervalStart: now,
+        lastKeystroke: now,
+      }
+    } else {
+      const s = sessionRef.current
+      if (now - s.lastKeystroke > IDLE_MS) {
+        // Resume after idle: close previous interval, start new one
+        s.activeMs += s.lastKeystroke - s.intervalStart
+        s.intervalStart = now
+      }
+      s.lastKeystroke = now
+    }
+    // Reset flush-on-idle timer
+    if (flushTimerRef.current) clearTimeout(flushTimerRef.current)
+    flushTimerRef.current = setTimeout(flushSession, SESSION_FLUSH_MS)
+  }
 
 
   // Initialize editor
@@ -116,6 +196,8 @@ export function MarkdownEditor(): JSX.Element {
               storeTimerRef.current = setTimeout(() => {
                 useBorgesStore.getState().setContent(content)
               }, 300)
+              const { activeStoryId } = useBorgesStore.getState()
+              if (activeStoryId) onDocChanged(activeStoryId, content)
             }
           }),
           EditorView.domEventHandlers({
@@ -144,7 +226,14 @@ export function MarkdownEditor(): JSX.Element {
       parent: editorRef.current
     })
     viewRef.current = view
-    return () => { view.destroy(); viewRef.current = null }
+    const handleBlur = (): void => flushSession()
+    window.addEventListener('blur', handleBlur)
+    return () => {
+      flushSession()
+      window.removeEventListener('blur', handleBlur)
+      view.destroy()
+      viewRef.current = null
+    }
   }, [])
 
   // Sync content when active story changes
@@ -152,6 +241,7 @@ export function MarkdownEditor(): JSX.Element {
     const view = viewRef.current
     if (!view) return
     if (activeStoryPath !== lastPathRef.current) {
+      flushSession()
       lastPathRef.current = activeStoryPath
       view.dispatch({ changes: { from: 0, to: view.state.doc.length, insert: activeStoryContent } })
       view.dispatch({ effects: setAnnotationsEffect.of([]) })

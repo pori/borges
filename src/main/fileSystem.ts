@@ -47,6 +47,18 @@ export interface RevisionMeta {
   wordCount: number
 }
 
+export interface TelemetrySession {
+  id: string
+  storyId: string
+  date: string          // YYYY-MM-DD local date
+  startedAt: number     // ms timestamp
+  endedAt: number       // ms timestamp
+  wordsStart: number
+  wordsEnd: number
+  activeMs: number      // typing time, excluding idle gaps
+  wpm: number
+}
+
 // ─── Path helpers ─────────────────────────────────────────────────────────────
 
 const borgesDir = (): string => join(getCollectionRoot(), '.borges')
@@ -56,6 +68,7 @@ const sessionFile = (): string => join(borgesDir(), 'session.json')
 const marketsFile = (): string => join(borgesDir(), 'markets.json')
 const submissionsFile = (): string => join(borgesDir(), 'submissions.json')
 const revisionsDir = (): string => join(borgesDir(), 'revisions')
+const telemetryFile = (): string => join(borgesDir(), 'telemetry.json')
 
 const MAX_REVISIONS = 50
 
@@ -319,4 +332,24 @@ export async function loadRevision(filePath: string, revisionId: string): Promis
   const revPath = join(revisionsDir(), slug, `${revisionId}.json`)
   const raw = JSON.parse(await readFile(revPath, 'utf-8'))
   return raw.content
+}
+
+// ─── Telemetry ────────────────────────────────────────────────────────────────
+
+export async function appendTelemetrySession(session: TelemetrySession): Promise<void> {
+  await mkdir(borgesDir(), { recursive: true })
+  let sessions: TelemetrySession[] = []
+  try {
+    sessions = JSON.parse(await readFile(telemetryFile(), 'utf-8'))
+  } catch { /* first write */ }
+  sessions.push(session)
+  await writeFile(telemetryFile(), JSON.stringify(sessions, null, 2), 'utf-8')
+}
+
+export async function readTelemetry(): Promise<TelemetrySession[]> {
+  try {
+    return JSON.parse(await readFile(telemetryFile(), 'utf-8'))
+  } catch {
+    return []
+  }
 }

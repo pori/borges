@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer } from 'electron'
-import type { Market, Submission, StoryFile, StoryMeta, RevisionMeta, CollectionConfig } from '../main/fileSystem'
+import type { Market, Submission, StoryFile, StoryMeta, RevisionMeta, CollectionConfig, TelemetrySession } from '../main/fileSystem'
 import type { AIPayload } from '../main/aiService'
 import type { GlobalConfig } from '../main/globalConfig'
 
@@ -86,6 +86,10 @@ contextBridge.exposeInMainWorld('api', {
       ipcRenderer.invoke('ai:streamMessage', payload).catch(reject)
     })
   },
+
+  // Telemetry
+  appendTelemetrySession: (session: TelemetrySession): Promise<void> => ipcRenderer.invoke('telemetry:append', session),
+  readTelemetry: (): Promise<TelemetrySession[]> => ipcRenderer.invoke('telemetry:read'),
 
   // Native context menus
   showEditorContextMenu: (): Promise<void> => ipcRenderer.invoke('menu:editorContext'),

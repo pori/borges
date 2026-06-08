@@ -1,4 +1,4 @@
-import type { StoryFile, StoryMeta, Market, Submission, RevisionMeta } from './borges'
+import type { StoryFile, StoryMeta, Market, Submission, RevisionMeta, TelemetrySession } from './borges'
 
 type AnalysisModeAI = 'compression' | 'ending' | 'tone' | 'market_fit' | 'chat'
 
@@ -53,6 +53,8 @@ declare global {
       saveRevision(path: string, content: string): Promise<void>
       listRevisions(path: string): Promise<RevisionMeta[]>
       loadRevision(path: string, id: string): Promise<string>
+      appendTelemetrySession(session: TelemetrySession): Promise<void>
+      readTelemetry(): Promise<TelemetrySession[]>
       readConfig(): Promise<GlobalConfig>
       writeConfig(updates: Partial<GlobalConfig>): Promise<void>
       pickFolder(): Promise<string | null>

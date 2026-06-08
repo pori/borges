@@ -43,6 +43,18 @@ export interface RevisionMeta {
   wordCount: number
 }
 
+export interface TelemetrySession {
+  id: string
+  storyId: string
+  date: string
+  startedAt: number
+  endedAt: number
+  wordsStart: number
+  wordsEnd: number
+  activeMs: number
+  wpm: number
+}
+
 export interface ChatMessage {
   id: string
   role: 'user' | 'assistant'
