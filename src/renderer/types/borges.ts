@@ -3,6 +3,7 @@ export interface StoryMeta {
   wordCountTarget?: number
   tags?: string[]
   notes?: string
+  prompt?: string
 }
 
 export interface StoryFile {

@@ -72,13 +72,12 @@ export function PromptHero(): JSX.Element {
     }
     const name = `Story ${stories.length + 1}`
     const created = await window.api.createStory(name)
+    await window.api.setStoryMeta(created.id, { prompt })
     const refreshed = await window.api.listStories()
     setStories(refreshed)
     const story = refreshed.find((s) => s.path === created.path)
     if (story) {
-      const initial = `> ${prompt}\n\n`
-      await window.api.writeStory(story.path, initial)
-      setActiveStory(story.path, story.id, initial)
+      setActiveStory(story.path, story.id, '')
     }
   }
 

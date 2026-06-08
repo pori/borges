@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { EditorView, keymap, Decoration, type DecorationSet, ViewPlugin, type ViewUpdate } from '@codemirror/view'
 import { EditorState, StateField, StateEffect, RangeSetBuilder, Compartment } from '@codemirror/state'
 import { markdown } from '@codemirror/lang-markdown'
@@ -53,11 +53,11 @@ const annPlugin = ViewPlugin.fromClass(class {
 const themeCompartment = new Compartment()
 const fontSizeCompartment = new Compartment()
 
-function buildTheme(fontSize: number, isDark: boolean): ReturnType<typeof EditorView.theme> {
+function buildTheme(fontSize: number, isDark: boolean, hasPrompt = false): ReturnType<typeof EditorView.theme> {
   return EditorView.theme({
     '&': { height: '100%', background: 'transparent' },
     '.cm-scroller': { fontFamily: 'Georgia, "Times New Roman", serif', fontSize: `${fontSize}px`, lineHeight: '1.85', overflow: 'auto' },
-    '.cm-content': { maxWidth: '680px', margin: '0 auto', padding: '48px 24px 24px', caretColor: 'var(--accent)' },
+    '.cm-content': { maxWidth: '680px', margin: '0 auto', padding: `${hasPrompt ? '24px' : '48px'} 24px 24px`, caretColor: 'var(--accent)' },
     '.cm-line': { padding: '0' },
     '.cm-cursor': { borderLeftColor: 'var(--accent)', borderLeftWidth: '2px' },
     '.cm-selectionBackground': { background: 'rgba(200,169,110,0.25)' },
@@ -85,6 +85,7 @@ export function MarkdownEditor(): JSX.Element {
   const viewRef = useRef<EditorView | null>(null)
   const lastPathRef = useRef<string | null>(null)
   const storeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const [storyPrompt, setStoryPrompt] = useState<string | null>(null)
 
 
   // Initialize editor
@@ -159,6 +160,14 @@ export function MarkdownEditor(): JSX.Element {
     }
   }, [activeStoryPath, activeStoryContent, setRevisions])
 
+  // Load prompt from meta when story changes
+  useEffect(() => {
+    if (!activeStoryId) { setStoryPrompt(null); return }
+    window.api.getStoryMeta(activeStoryId).then((meta) => {
+      setStoryPrompt(meta.prompt ?? null)
+    }).catch(() => setStoryPrompt(null))
+  }, [activeStoryId])
+
   // Sync annotations into editor
   useEffect(() => {
     const view = viewRef.current
@@ -168,8 +177,8 @@ export function MarkdownEditor(): JSX.Element {
 
   // Update theme
   useEffect(() => {
-    viewRef.current?.dispatch({ effects: themeCompartment.reconfigure(buildTheme(fontSize, theme === 'dark')) })
-  }, [theme, fontSize])
+    viewRef.current?.dispatch({ effects: themeCompartment.reconfigure(buildTheme(fontSize, theme === 'dark', !!storyPrompt)) })
+  }, [theme, fontSize, storyPrompt])
 
   if (!activeStoryId) {
     return <div className="no-story-placeholder">Select a story or create a new one</div>
@@ -178,6 +187,14 @@ export function MarkdownEditor(): JSX.Element {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', position: 'relative' }}>
       <WordCountBar />
+      {storyPrompt && (
+        <div className="story-prompt-banner">
+          <div className="story-prompt-banner-inner">
+            <span className="story-prompt-banner-label">Prompt</span>
+            {storyPrompt}
+          </div>
+        </div>
+      )}
       <div
         style={{ flex: 1, overflow: 'hidden', position: 'relative' }}
         onMouseDown={(e) => {
