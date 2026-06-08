@@ -38,6 +38,7 @@ function annDecorations(anns: TextAnnotation[], doc: { toString(): string }): De
   return builder.finish()
 }
 
+
 const annPlugin = ViewPlugin.fromClass(class {
   decorations: DecorationSet
   constructor(view: EditorView) { this.decorations = annDecorations(view.state.field(annField), view.state.doc) }
