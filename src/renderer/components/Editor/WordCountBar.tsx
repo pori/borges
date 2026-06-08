@@ -11,6 +11,15 @@ export function WordCountBar(): JSX.Element {
 
   const wordCount = activeStoryContent.trim() === '' ? 0 : activeStoryContent.trim().split(/\s+/).length
 
+  const avgSentenceWords = (() => {
+    const text = activeStoryContent.trim()
+    if (!text) return null
+    const sentences = text.split(/[.!?]+/).map((s) => s.trim()).filter((s) => s.length > 0)
+    if (sentences.length === 0) return null
+    const totalWords = sentences.reduce((sum, s) => sum + s.split(/\s+/).length, 0)
+    return Math.round(totalWords / sentences.length)
+  })()
+
   // Determine target: story's own target, or selected market's max
   const target = story?.meta.wordCountTarget ?? selectedMarket?.wordCountMax ?? null
 
@@ -43,6 +52,11 @@ export function WordCountBar(): JSX.Element {
       <span className={`wordcount-number${colorClass ? ' ' + colorClass : ''}`}>
         {wordCount.toLocaleString()}
       </span>
+      {avgSentenceWords !== null && (
+        <span style={{ fontSize: '11px', color: 'var(--text3)', whiteSpace: 'nowrap' }} title="avg words per sentence">
+          {avgSentenceWords}w/s
+        </span>
+      )}
       {target && (
         <>
           <span style={{ color: 'var(--text3)', fontSize: '11px' }}>/ {target.toLocaleString()}</span>
