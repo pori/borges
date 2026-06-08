@@ -92,10 +92,12 @@ export function MarkdownEditor(): JSX.Element {
   useEffect(() => {
     if (!editorRef.current) return
     const isDark = theme === 'dark'
+    const { activeStoryContent, activeStoryPath } = useBorgesStore.getState()
+    lastPathRef.current = activeStoryPath
 
     const view = new EditorView({
       state: EditorState.create({
-        doc: '',
+        doc: activeStoryContent,
         extensions: [
           history(),
           markdown(),
