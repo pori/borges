@@ -16,7 +16,6 @@ export default function App(): JSX.Element {
     focusMode, toggleFocusMode,
     theme, toggleTheme,
     fontSize, setFontSize,
-    showInvisibles, toggleInvisibles,
     activeStoryId, isDirty, activeStoryPath, activeStoryContent, markSaved,
     stories, setStories,
     setMarkets,
@@ -160,11 +159,6 @@ export default function App(): JSX.Element {
             title="Revision history"
             disabled={!activeStoryId}
           >⟳</button>
-          <button
-            className={`app-titlebar-btn${showInvisibles ? ' active' : ''}`}
-            onClick={toggleInvisibles}
-            title="Show invisibles"
-          >¶</button>
           <button
             className={`app-titlebar-btn${focusMode ? ' active' : ''}`}
             onClick={toggleFocusMode}

@@ -72,8 +72,6 @@ interface BorgesState {
   toggleTheme: () => void
   fontSize: number
   setFontSize: (size: number) => void
-  showInvisibles: boolean
-  toggleInvisibles: () => void
   initPrefs: () => Promise<void>
 
   // Session
@@ -232,8 +230,6 @@ export const useBorgesStore = create<BorgesState>((set, get) => ({
     window.api.writeConfig({ fontSize: clamped })
     set({ fontSize: clamped })
   },
-  showInvisibles: false,
-  toggleInvisibles: () => set((s) => ({ showInvisibles: !s.showInvisibles })),
   initPrefs: async () => {
     const cfg = await window.api.readConfig()
     const fontSize = Math.max(11, Math.min(24, cfg.fontSize ?? 15))
