@@ -177,7 +177,22 @@ export function MarkdownEditor(): JSX.Element {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', position: 'relative' }}>
       <WordCountBar />
-      <div style={{ flex: 1, overflow: 'hidden', position: 'relative' }}>
+      <div
+        style={{ flex: 1, overflow: 'hidden', position: 'relative' }}
+        onMouseDown={(e) => {
+          const view = viewRef.current
+          if (!view) return
+          const target = e.target as Element
+          // Let clicks directly on text content (inside a line) be handled natively
+          if (target.closest('.cm-line')) return
+          const pos = view.posAtCoords({ x: e.clientX, y: e.clientY }, false)
+          if (pos !== null) {
+            view.dispatch({ selection: { anchor: pos } })
+            view.focus()
+            e.preventDefault()
+          }
+        }}
+      >
         <div ref={editorRef} style={{ height: '100%' }} />
         {revisionPanelOpen && activeStoryPath && (
           <RevisionPanel
