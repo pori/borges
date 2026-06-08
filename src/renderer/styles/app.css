@@ -377,6 +377,85 @@ textarea { resize: vertical; }
 .dashboard-row-flag { font-size: 11px; color: var(--warn); flex-shrink: 0; }
 .dashboard-empty { font-size: 13px; color: var(--text3); padding: 8px 0; }
 
+/* ── Prompt hero ──────────────────────────────────────────────────────────── */
+.prompt-hero {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 28px 32px 24px;
+  margin-bottom: 32px;
+}
+.prompt-hero-label {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text3);
+  margin-bottom: 14px;
+}
+.prompt-hero-text {
+  font-size: 18px;
+  font-weight: 300;
+  line-height: 1.55;
+  color: var(--text);
+  min-height: 28px;
+  margin-bottom: 22px;
+  font-style: italic;
+}
+.prompt-hero-text--loading {
+  opacity: 0.7;
+}
+.prompt-hero-placeholder {
+  display: inline-block;
+  width: 120px;
+  height: 18px;
+  background: var(--bg3);
+  border-radius: 3px;
+  animation: prompt-pulse 1.2s ease-in-out infinite;
+}
+@keyframes prompt-pulse {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+.prompt-hero-error {
+  font-size: 13px;
+  font-style: normal;
+  color: var(--danger);
+}
+.prompt-hero-actions {
+  display: flex;
+  gap: 10px;
+}
+.prompt-hero-btn {
+  padding: 6px 16px;
+  border-radius: 5px;
+  font-size: 13px;
+  border: 1px solid var(--border);
+  background: var(--bg3);
+  color: var(--text2);
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+}
+.prompt-hero-btn:hover:not(:disabled) {
+  background: var(--bg);
+  color: var(--text);
+}
+.prompt-hero-btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.prompt-hero-btn--primary {
+  background: var(--accent);
+  color: var(--bg);
+  border-color: var(--accent);
+  font-weight: 500;
+}
+.prompt-hero-btn--primary:hover:not(:disabled) {
+  background: var(--accent2);
+  border-color: var(--accent2);
+  color: var(--bg);
+}
+
 /* ── Submission panel ─────────────────────────────────────────────────────── */
 .sub-panel {
   grid-area: subpanel;

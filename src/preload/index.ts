@@ -44,6 +44,27 @@ contextBridge.exposeInMainWorld('api', {
   pickFolder: (): Promise<string | null> => ipcRenderer.invoke('config:pickFolder'),
 
   // AI
+  generatePrompt: (onChunk: (chunk: string) => void): Promise<void> => {
+    return new Promise((resolve, reject) => {
+      const chunkHandler = (_: Electron.IpcRendererEvent, chunk: string): void => onChunk(chunk)
+      const doneHandler = (): void => {
+        ipcRenderer.removeListener('ai:promptChunk', chunkHandler)
+        ipcRenderer.removeListener('ai:promptDone', doneHandler)
+        ipcRenderer.removeListener('ai:promptError', errorHandler)
+        resolve()
+      }
+      const errorHandler = (_: Electron.IpcRendererEvent, message: string): void => {
+        ipcRenderer.removeListener('ai:promptChunk', chunkHandler)
+        ipcRenderer.removeListener('ai:promptDone', doneHandler)
+        ipcRenderer.removeListener('ai:promptError', errorHandler)
+        reject(new Error(message))
+      }
+      ipcRenderer.on('ai:promptChunk', chunkHandler)
+      ipcRenderer.on('ai:promptDone', doneHandler)
+      ipcRenderer.on('ai:promptError', errorHandler)
+      ipcRenderer.invoke('ai:generatePrompt').catch(reject)
+    })
+  },
   streamAIMessage: (payload: AIPayload, onChunk: (chunk: string) => void): Promise<void> => {
     return new Promise((resolve, reject) => {
       const chunkHandler = (_: Electron.IpcRendererEvent, chunk: string): void => onChunk(chunk)

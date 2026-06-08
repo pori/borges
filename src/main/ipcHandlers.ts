@@ -8,7 +8,7 @@ import {
   saveRevision, listRevisions, loadRevision
 } from './fileSystem'
 import type { Market, Submission, StoryMeta } from './fileSystem'
-import { streamMessage, resetClient } from './aiService'
+import { streamMessage, streamPrompt, resetClient } from './aiService'
 import type { AIPayload } from './aiService'
 import { readGlobalConfig, writeGlobalConfig } from './globalConfig'
 import type { GlobalConfig } from './globalConfig'
@@ -89,6 +89,29 @@ export function registerIpcHandlers(): void {
   })
 
   // ── AI streaming ──────────────────────────────────────────────────────────────
+  ipcMain.handle('ai:generatePrompt', async (event) => {
+    try {
+      let pending = ''
+      let flushTimer: ReturnType<typeof setTimeout> | null = null
+      const flush = (): void => {
+        if (flushTimer) { clearTimeout(flushTimer); flushTimer = null }
+        if (pending && !event.sender.isDestroyed()) {
+          event.sender.send('ai:promptChunk', pending)
+          pending = ''
+        }
+      }
+      await streamPrompt((chunk: string) => {
+        pending += chunk
+        if (!flushTimer) flushTimer = setTimeout(flush, 30)
+      })
+      flush()
+      if (!event.sender.isDestroyed()) event.sender.send('ai:promptDone')
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err)
+      if (!event.sender.isDestroyed()) event.sender.send('ai:promptError', message)
+    }
+  })
+
   ipcMain.handle('ai:streamMessage', async (event, payload: AIPayload) => {
     try {
       let pending = ''

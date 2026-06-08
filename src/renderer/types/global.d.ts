@@ -56,6 +56,7 @@ declare global {
       readConfig(): Promise<GlobalConfig>
       writeConfig(updates: Partial<GlobalConfig>): Promise<void>
       pickFolder(): Promise<string | null>
+      generatePrompt(onChunk: (chunk: string) => void): Promise<void>
       streamAIMessage(payload: AIPayload, onChunk: (chunk: string) => void): Promise<void>
       showEditorContextMenu(): Promise<void>
       showStoryContextMenu(storyId: string): Promise<string | null>

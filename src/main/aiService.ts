@@ -95,6 +95,24 @@ Be candid. If the fit is poor, say so plainly.`
   return `You are an expert flash fiction editor. ${wordConstraint}${collectionSection}${marketSection}${storyBlock}\n\n${modeInstructions[payload.mode]}`
 }
 
+export async function streamPrompt(onChunk: (chunk: string) => void): Promise<void> {
+  const client = getClient()
+  const stream = client.messages.stream({
+    model: 'claude-haiku-4-5-20251001',
+    max_tokens: 120,
+    messages: [{
+      role: 'user',
+      content: 'Generate a single flash fiction writing prompt in one sentence (under 25 words). Be specific and evocative — give a concrete situation, image, or constraint. No preamble, no label, just the prompt itself.'
+    }]
+  })
+  for await (const chunk of stream) {
+    if (chunk.type === 'content_block_delta' && chunk.delta.type === 'text_delta') {
+      onChunk(chunk.delta.text)
+    }
+  }
+  await stream.finalMessage()
+}
+
 export async function streamMessage(
   payload: AIPayload,
   onChunk: (chunk: string) => void

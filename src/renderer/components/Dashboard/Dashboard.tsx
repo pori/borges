@@ -1,4 +1,5 @@
 import { useBorgesStore } from '../../store/borgesStore'
+import { PromptHero } from './PromptHero'
 
 function daysSince(iso: string): number {
   return Math.floor((Date.now() - new Date(iso).getTime()) / 86_400_000)
@@ -42,6 +43,7 @@ export function Dashboard(): JSX.Element {
 
   return (
     <div className="dashboard">
+      <PromptHero />
       <div className="dashboard-greeting">
         {stories.length === 0
           ? 'Welcome to Borges. Create your first story to get started.'
