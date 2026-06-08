@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import { EditorView, keymap, Decoration, type DecorationSet, ViewPlugin, type ViewUpdate } from '@codemirror/view'
+import { EditorView, keymap, Decoration, type DecorationSet, ViewPlugin, type ViewUpdate, WidgetType } from '@codemirror/view'
 import { EditorState, StateField, StateEffect, RangeSetBuilder, Compartment } from '@codemirror/state'
 import { markdown } from '@codemirror/lang-markdown'
 import { syntaxHighlighting, HighlightStyle } from '@codemirror/language'
@@ -48,6 +48,41 @@ const annPlugin = ViewPlugin.fromClass(class {
   }
 }, { decorations: v => v.decorations })
 
+class SpaceDot extends WidgetType {
+  toDOM(): HTMLElement {
+    const span = document.createElement('span')
+    span.className = 'cm-space-dot'
+    span.textContent = '·'
+    return span
+  }
+  ignoreEvent(): boolean { return false }
+}
+
+const showInvisiblesCompartment = new Compartment()
+
+function buildInvisiblesPlugin(enabled: boolean) {
+  if (!enabled) return []
+  return ViewPlugin.fromClass(class {
+    decorations: DecorationSet
+    constructor(view: EditorView) { this.decorations = this.build(view) }
+    update(update: ViewUpdate) {
+      if (update.docChanged || update.viewportChanged) this.decorations = this.build(update.view)
+    }
+    build(view: EditorView): DecorationSet {
+      const builder = new RangeSetBuilder<Decoration>()
+      for (const { from, to } of view.visibleRanges) {
+        const text = view.state.doc.sliceString(from, to)
+        for (let i = 0; i < text.length; i++) {
+          if (text[i] === ' ') {
+            builder.add(from + i, from + i + 1, Decoration.replace({ widget: new SpaceDot() }))
+          }
+        }
+      }
+      return builder.finish()
+    }
+  }, { decorations: v => v.decorations })
+}
+
 const themeCompartment = new Compartment()
 const fontSizeCompartment = new Compartment()
 
@@ -78,7 +113,7 @@ const markdownHighlight = HighlightStyle.define([
 
 export function MarkdownEditor(): JSX.Element {
   const { activeStoryPath, activeStoryContent, activeStoryId,
-    annotations, theme, fontSize, revisionPanelOpen, toggleRevisionPanel, revisions, setRevisions } = useBorgesStore()
+    annotations, theme, fontSize, showInvisibles, revisionPanelOpen, toggleRevisionPanel, revisions, setRevisions } = useBorgesStore()
   const editorRef = useRef<HTMLDivElement>(null)
   const viewRef = useRef<EditorView | null>(null)
   const lastPathRef = useRef<string | null>(null)
@@ -102,6 +137,7 @@ export function MarkdownEditor(): JSX.Element {
           annPlugin,
           themeCompartment.of(buildTheme(fontSize, isDark)),
           fontSizeCompartment.of([]),
+          showInvisiblesCompartment.of(buildInvisiblesPlugin(false)),
           EditorView.lineWrapping,
           EditorView.updateListener.of((update) => {
             if (update.docChanged) {
@@ -160,6 +196,11 @@ export function MarkdownEditor(): JSX.Element {
   useEffect(() => {
     viewRef.current?.dispatch({ effects: themeCompartment.reconfigure(buildTheme(fontSize, theme === 'dark')) })
   }, [theme, fontSize])
+
+  // Update show invisibles
+  useEffect(() => {
+    viewRef.current?.dispatch({ effects: showInvisiblesCompartment.reconfigure(buildInvisiblesPlugin(showInvisibles)) })
+  }, [showInvisibles])
 
   if (!activeStoryId) {
     return <div className="no-story-placeholder">Select a story or create a new one</div>

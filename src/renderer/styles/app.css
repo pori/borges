@@ -303,7 +303,8 @@ textarea { resize: vertical; }
 .cm-editor.cm-focused { outline: none; }
 .cm-scroller { font-family: 'Georgia', 'Times New Roman', serif; line-height: 1.8; }
 .cm-content { max-width: 680px; margin: 0 auto; padding: 0 24px; }
-.cm-line { padding: 0; }
+.cm-line { padding: 0; margin-bottom: 0.75em; }
+.cm-line:last-child { margin-bottom: 0; }
 .cm-cursor { border-left-color: var(--accent) !important; }
 .cm-selectionBackground { background: rgba(200, 169, 110, 0.25) !important; }
 .cm-focused .cm-selectionBackground { background: rgba(200, 169, 110, 0.35) !important; }
@@ -317,6 +318,12 @@ textarea { resize: vertical; }
   border-radius: 2px;
 }
 .ann-highlight:hover { background: rgba(200, 169, 110, 0.28); }
+
+.cm-space-dot {
+  color: var(--text3);
+  pointer-events: none;
+  user-select: none;
+}
 
 /* Dashboard */
 .dashboard {
