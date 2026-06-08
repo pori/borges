@@ -44,16 +44,9 @@ function StoryItem({ story, index, isActive, onClick, onContextMenu, onDragStart
   )
 }
 
-interface ContextMenuState {
-  x: number
-  y: number
-  story: StoryFile
-}
-
 export function StorySidebar(): JSX.Element {
   const { stories, activeStoryPath, activeStoryId, activeStoryContent, isDirty, setStories, moveStory, markSaved } = useBorgesStore()
   const [search, setSearch] = useState('')
-  const [contextMenu, setContextMenu] = useState<ContextMenuState | null>(null)
   const [renaming, setRenaming] = useState<string | null>(null)
   const [renameValue, setRenameValue] = useState('')
   const dragFrom = useRef<number>(-1)
@@ -95,15 +88,25 @@ export function StorySidebar(): JSX.Element {
   }
 
   const handleDelete = async (story: StoryFile): Promise<void> => {
-    setContextMenu(null)
     await window.api.deleteStory(story.path)
     if (story.path === activeStoryPath) useBorgesStore.getState().clearActiveStory()
     const refreshed = await window.api.listStories()
     setStories(refreshed)
   }
 
+  const handleStoryContextMenu = async (e: React.MouseEvent, story: StoryFile): Promise<void> => {
+    e.preventDefault()
+    const action = await window.api.showStoryContextMenu(story.id)
+    if (action === 'rename') {
+      setRenaming(story.id)
+      setRenameValue(story.id)
+    } else if (action === 'delete') {
+      handleDelete(story)
+    }
+  }
+
   return (
-    <div className="sidebar" onClick={() => contextMenu && setContextMenu(null)}>
+    <div className="sidebar">
       <div className="sidebar-header">
         <span className="sidebar-title">Stories</span>
         <button className="sidebar-btn" onClick={handleNew} title="New story">+</button>
@@ -139,10 +142,7 @@ export function StorySidebar(): JSX.Element {
                 index={idx}
                 isActive={story.id === activeStoryId}
                 onClick={() => openStory(story)}
-                onContextMenu={(e) => {
-                  e.preventDefault()
-                  setContextMenu({ x: e.clientX, y: e.clientY, story })
-                }}
+                onContextMenu={(e) => handleStoryContextMenu(e, story)}
                 onDragStart={(i) => { dragFrom.current = i }}
                 onDragOver={(i) => { if (dragFrom.current !== -1 && dragFrom.current !== i) moveStory(dragFrom.current, i) }}
                 onDrop={() => { dragFrom.current = -1 }}
@@ -152,21 +152,6 @@ export function StorySidebar(): JSX.Element {
         ))}
       </div>
 
-      {contextMenu && (
-        <div
-          className="context-menu"
-          style={{ left: contextMenu.x, top: contextMenu.y }}
-          onClick={(e) => e.stopPropagation()}
-        >
-          <button className="context-menu-item" onClick={() => {
-            setRenaming(contextMenu.story.id)
-            setRenameValue(contextMenu.story.id)
-            setContextMenu(null)
-          }}>Rename</button>
-          <div className="context-menu-sep" />
-          <button className="context-menu-item danger" onClick={() => handleDelete(contextMenu.story)}>Delete</button>
-        </div>
-      )}
     </div>
   )
 }

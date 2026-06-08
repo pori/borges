@@ -1,4 +1,4 @@
-import { ipcMain, dialog, BrowserWindow } from 'electron'
+import { ipcMain, dialog, BrowserWindow, Menu } from 'electron'
 import {
   listStories, readStory, writeStory, createStory, renameStory, deleteStory,
   getStoryMeta, setStoryMeta, getCollectionConfig, setCollectionContext,
@@ -58,6 +58,34 @@ export function registerIpcHandlers(): void {
     const win = BrowserWindow.fromWebContents(event.sender)
     const result = await dialog.showOpenDialog(win!, { properties: ['openDirectory'] })
     return result.canceled ? null : result.filePaths[0]
+  })
+
+  // ── Native context menus ─────────────────────────────────────────────────────
+  ipcMain.handle('menu:editorContext', async (event) => {
+    const win = BrowserWindow.fromWebContents(event.sender)
+    if (!win) return
+    const menu = Menu.buildFromTemplate([
+      { role: 'cut' },
+      { role: 'copy' },
+      { role: 'paste' },
+      { type: 'separator' },
+      { role: 'selectAll' },
+    ])
+    menu.popup({ window: win })
+  })
+
+  ipcMain.handle('menu:storyContext', async (event, _storyId: string) => {
+    const win = BrowserWindow.fromWebContents(event.sender)
+    if (!win) return
+    return new Promise<string | null>((resolve) => {
+      const menu = Menu.buildFromTemplate([
+        { label: 'Rename', click: () => resolve('rename') },
+        { type: 'separator' },
+        { label: 'Delete', click: () => resolve('delete') },
+      ])
+      menu.on('menu-will-close', () => setTimeout(() => resolve(null), 100))
+      menu.popup({ window: win })
+    })
   })
 
   // ── AI streaming ──────────────────────────────────────────────────────────────

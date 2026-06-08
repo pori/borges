@@ -57,6 +57,8 @@ declare global {
       writeConfig(updates: Partial<GlobalConfig>): Promise<void>
       pickFolder(): Promise<string | null>
       streamAIMessage(payload: AIPayload, onChunk: (chunk: string) => void): Promise<void>
+      showEditorContextMenu(): Promise<void>
+      showStoryContextMenu(storyId: string): Promise<string | null>
       onMenuAction(handler: (action: string) => void): () => void
     }
   }

@@ -83,6 +83,7 @@ export function MarkdownEditor(): JSX.Element {
   const editorRef = useRef<HTMLDivElement>(null)
   const viewRef = useRef<EditorView | null>(null)
   const lastPathRef = useRef<string | null>(null)
+  const storeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
 
   // Initialize editor
@@ -107,10 +108,17 @@ export function MarkdownEditor(): JSX.Element {
           EditorView.updateListener.of((update) => {
             if (update.docChanged) {
               const content = update.state.doc.toString()
-              useBorgesStore.getState().setContent(content)
+              if (storeTimerRef.current) clearTimeout(storeTimerRef.current)
+              storeTimerRef.current = setTimeout(() => {
+                useBorgesStore.getState().setContent(content)
+              }, 300)
             }
           }),
           EditorView.domEventHandlers({
+            contextmenu: (e) => {
+              e.preventDefault()
+              window.api.showEditorContextMenu()
+            },
             keydown: (e) => {
               if ((e.metaKey || e.ctrlKey) && e.key === 's') {
                 e.preventDefault()

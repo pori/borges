@@ -2,7 +2,7 @@ import { app, BrowserWindow, shell, nativeImage, Menu, dialog } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import { registerIpcHandlers } from './ipcHandlers'
-import { getCollectionRoot } from './globalConfig'
+import { getCollectionRoot, readGlobalConfig } from './globalConfig'
 
 app.setName('Borges')
 
@@ -92,6 +92,8 @@ function buildAppMenu(win: BrowserWindow): void {
 
 function createWindow(): BrowserWindow {
   const icon = nativeImage.createFromPath(join(__dirname, '../../resources/icon.png'))
+  const config = readGlobalConfig()
+  const isDark = config.theme !== 'light'
   const mainWindow = new BrowserWindow({
     width: 1440,
     height: 900,
@@ -99,6 +101,8 @@ function createWindow(): BrowserWindow {
     minHeight: 600,
     title: 'Borges',
     titleBarStyle: 'hiddenInset',
+    vibrancy: 'sidebar',
+    backgroundColor: isDark ? '#1c1a18' : '#f5f0ea',
     icon,
     show: false,
     webPreferences: {

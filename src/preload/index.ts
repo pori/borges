@@ -66,6 +66,10 @@ contextBridge.exposeInMainWorld('api', {
     })
   },
 
+  // Native context menus
+  showEditorContextMenu: (): Promise<void> => ipcRenderer.invoke('menu:editorContext'),
+  showStoryContextMenu: (storyId: string): Promise<string | null> => ipcRenderer.invoke('menu:storyContext', storyId),
+
   // Menu
   onMenuAction: (handler: (action: string) => void): (() => void) => {
     const listener = (_: Electron.IpcRendererEvent, action: string): void => handler(action)
