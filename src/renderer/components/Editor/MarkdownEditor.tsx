@@ -90,7 +90,7 @@ function buildTheme(fontSize: number, isDark: boolean): ReturnType<typeof Editor
   return EditorView.theme({
     '&': { height: '100%', background: 'transparent' },
     '.cm-scroller': { fontFamily: 'Georgia, "Times New Roman", serif', fontSize: `${fontSize}px`, lineHeight: '1.85', overflow: 'auto' },
-    '.cm-content': { maxWidth: '680px', margin: '0 auto', padding: '0 24px', caretColor: 'var(--accent)' },
+    '.cm-content': { maxWidth: '680px', margin: '0 auto', padding: '48px 24px 24px', caretColor: 'var(--accent)' },
     '.cm-line': { padding: '0' },
     '.cm-cursor': { borderLeftColor: 'var(--accent)', borderLeftWidth: '2px' },
     '.cm-selectionBackground': { background: 'rgba(200,169,110,0.25)' },

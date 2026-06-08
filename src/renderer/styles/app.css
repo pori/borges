@@ -302,7 +302,7 @@ textarea { resize: vertical; }
 .cm-editor { height: 100%; }
 .cm-editor.cm-focused { outline: none; }
 .cm-scroller { font-family: 'Georgia', 'Times New Roman', serif; line-height: 1.8; }
-.cm-content { max-width: 680px; margin: 0 auto; padding: 0 24px; }
+.cm-content { max-width: 680px; margin: 0 auto; padding: 48px 24px 24px; }
 .cm-line { padding: 0; margin-bottom: 0.75em; }
 .cm-line:last-child { margin-bottom: 0; }
 .cm-cursor { border-left-color: var(--accent) !important; }
