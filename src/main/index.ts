@@ -114,9 +114,7 @@ function createWindow(): BrowserWindow {
   })
 
   mainWindow.on('ready-to-show', () => mainWindow.show())
-  mainWindow.on('enter-full-screen', () => mainWindow.setWindowButtonVisibility(false))
-  mainWindow.on('leave-full-screen', () => mainWindow.setWindowButtonVisibility(true))
-  mainWindow.webContents.setWindowOpenHandler((details) => {
+mainWindow.webContents.setWindowOpenHandler((details) => {
     shell.openExternal(details.url)
     return { action: 'deny' }
   })
