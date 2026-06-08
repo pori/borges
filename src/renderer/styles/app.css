@@ -71,7 +71,7 @@ textarea { resize: vertical; }
   grid-template-areas:
     "titlebar titlebar titlebar titlebar"
     "sidebar  editor   subpanel chat";
-  transition: grid-template-columns 0.18s ease;
+  transition: grid-template-columns 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .app-layout[data-sidebar="closed"] {
@@ -301,14 +301,18 @@ textarea { resize: vertical; }
 /* CodeMirror overrides */
 .cm-editor { height: 100%; }
 .cm-editor.cm-focused { outline: none; }
-.cm-scroller { font-family: 'Georgia', 'Times New Roman', serif; line-height: 1.8; }
-.cm-content { max-width: 680px; margin: 0 auto; padding: 48px 24px 24px; }
+.cm-scroller { font-family: 'Georgia', 'Times New Roman', serif; line-height: 1.8; font-size: 16px; transition: font-size 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
+.cm-content { max-width: 680px; margin: 0 auto; padding: 48px 24px 24px; transition: max-width 0.4s cubic-bezier(0.4, 0, 0.2, 1), padding 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
 .cm-line { padding: 0; margin-bottom: 0.75em; }
 .cm-line:last-child { margin-bottom: 0; }
 .cm-cursor { border-left-color: var(--accent) !important; }
 .cm-selectionBackground { background: rgba(200, 169, 110, 0.25) !important; }
 .cm-focused .cm-selectionBackground { background: rgba(200, 169, 110, 0.35) !important; }
 .cm-gutters { display: none; }
+
+/* Focus mode: larger text and wider column */
+.app-layout[data-focus="on"] .cm-scroller { font-size: 24px; }
+.app-layout[data-focus="on"] .cm-content { max-width: 1400px; padding: 48px 48px 24px; }
 
 /* Annotation highlight */
 .ann-highlight {
