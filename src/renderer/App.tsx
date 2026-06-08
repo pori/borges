@@ -212,12 +212,8 @@ export default function App(): JSX.Element {
         <ChatPanel />
       </aside>
 
-      {/* Focus mode exit */}
-      {focusMode && (
-        <button className="focus-exit" onClick={toggleFocusMode} title="Exit focus mode (Esc)">✕</button>
-      )}
 
-      {/* Settings */}
+{/* Settings */}
       {settingsOpen && (
         <SettingsDialog
           onClose={async () => {
