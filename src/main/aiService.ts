@@ -1,4 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk'
+import OpenAI from 'openai'
 import { getApiKey, getAIConfig } from './globalConfig'
 import type { Market } from './fileSystem'
 
@@ -20,22 +21,41 @@ export interface AIPayload {
 const DEFAULT_MODEL = 'claude-sonnet-4-6'
 const DEFAULT_PROMPT_MODEL = 'claude-haiku-4-5-20251001'
 
-let _client: Anthropic | null = null
+let _anthropic: Anthropic | null = null
+let _openai: OpenAI | null = null
 
 export function resetClient(): void {
-  _client = null
+  _anthropic = null
+  _openai = null
 }
 
-function getClient(): Anthropic {
-  if (!_client) {
+function isCustomProvider(): boolean {
+  return !!getAIConfig().baseURL
+}
+
+function getAnthropicClient(): Anthropic {
+  if (!_anthropic) {
+    const apiKey = getApiKey()
+    if (!apiKey || apiKey === 'your-api-key-here') {
+      throw new Error('API key not set. Open Borges → Preferences to configure it.')
+    }
+    console.log('[aiService] provider: Anthropic (default)')
+    _anthropic = new Anthropic({ apiKey })
+  }
+  return _anthropic
+}
+
+function getOpenAIClient(): OpenAI {
+  if (!_openai) {
     const apiKey = getApiKey()
     if (!apiKey || apiKey === 'your-api-key-here') {
       throw new Error('API key not set. Open Borges → Preferences to configure it.')
     }
     const { baseURL } = getAIConfig()
-    _client = new Anthropic({ apiKey, ...(baseURL ? { baseURL } : {}) })
+    console.log('[aiService] provider: OpenAI-compatible, baseURL:', baseURL)
+    _openai = new OpenAI({ apiKey, baseURL })
   }
-  return _client
+  return _openai
 }
 
 function buildSystemPrompt(payload: AIPayload): string {
@@ -100,48 +120,73 @@ Be candid. If the fit is poor, say so plainly.`
 }
 
 export async function streamPrompt(onChunk: (chunk: string) => void): Promise<void> {
-  const client = getClient()
   const { promptModel } = getAIConfig()
-  const stream = client.messages.stream({
-    model: promptModel ?? DEFAULT_PROMPT_MODEL,
-    max_tokens: 120,
-    messages: [{
-      role: 'user',
-      content: 'Generate a single flash fiction writing prompt in one sentence (under 25 words). Be specific and evocative — give a concrete situation, image, or constraint. No preamble, no label, just the prompt itself.'
-    }]
-  })
-  for await (const chunk of stream) {
-    if (chunk.type === 'content_block_delta' && chunk.delta.type === 'text_delta') {
-      onChunk(chunk.delta.text)
+  const promptText = 'Generate a single flash fiction writing prompt in one sentence (under 25 words). Be specific and evocative — give a concrete situation, image, or constraint. No preamble, no label, just the prompt itself.'
+
+  if (isCustomProvider()) {
+    const client = getOpenAIClient()
+    const stream = await client.chat.completions.create({
+      model: promptModel ?? 'default',
+      max_tokens: 120,
+      stream: true,
+      messages: [{ role: 'user', content: promptText }]
+    })
+    for await (const chunk of stream) {
+      const text = chunk.choices[0]?.delta?.content
+      if (text) onChunk(text)
     }
+  } else {
+    const client = getAnthropicClient()
+    const stream = client.messages.stream({
+      model: promptModel ?? DEFAULT_PROMPT_MODEL,
+      max_tokens: 120,
+      messages: [{ role: 'user', content: promptText }]
+    })
+    for await (const chunk of stream) {
+      if (chunk.type === 'content_block_delta' && chunk.delta.type === 'text_delta') {
+        onChunk(chunk.delta.text)
+      }
+    }
+    await stream.finalMessage()
   }
-  await stream.finalMessage()
 }
 
 export async function streamMessage(
   payload: AIPayload,
   onChunk: (chunk: string) => void
 ): Promise<void> {
-  const client = getClient()
   const { model } = getAIConfig()
-
-  const messages: Anthropic.MessageParam[] = [
+  const system = buildSystemPrompt(payload)
+  const messages = [
     ...payload.conversationHistory.slice(-10),
-    { role: 'user', content: payload.userMessage }
+    { role: 'user' as const, content: payload.userMessage }
   ]
 
-  const stream = client.messages.stream({
-    model: model ?? DEFAULT_MODEL,
-    max_tokens: 4096,
-    system: buildSystemPrompt(payload),
-    messages
-  })
-
-  for await (const chunk of stream) {
-    if (chunk.type === 'content_block_delta' && chunk.delta.type === 'text_delta') {
-      onChunk(chunk.delta.text)
+  if (isCustomProvider()) {
+    const client = getOpenAIClient()
+    const stream = await client.chat.completions.create({
+      model: model ?? 'default',
+      max_tokens: 4096,
+      stream: true,
+      messages: [{ role: 'system', content: system }, ...messages]
+    })
+    for await (const chunk of stream) {
+      const text = chunk.choices[0]?.delta?.content
+      if (text) onChunk(text)
     }
+  } else {
+    const client = getAnthropicClient()
+    const stream = client.messages.stream({
+      model: model ?? DEFAULT_MODEL,
+      max_tokens: 4096,
+      system,
+      messages
+    })
+    for await (const chunk of stream) {
+      if (chunk.type === 'content_block_delta' && chunk.delta.type === 'text_delta') {
+        onChunk(chunk.delta.text)
+      }
+    }
+    await stream.finalMessage()
   }
-
-  await stream.finalMessage()
 }

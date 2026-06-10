@@ -74,7 +74,9 @@ function buildAppMenu(win: BrowserWindow): void {
         { type: 'separator' },
         { label: 'Increase Font Size', accelerator: 'CmdOrCtrl+=', click: () => send(win, 'fontIncrease') },
         { label: 'Decrease Font Size', accelerator: 'CmdOrCtrl+-', click: () => send(win, 'fontDecrease') },
-        { label: 'Reset Font Size', accelerator: 'CmdOrCtrl+0', click: () => send(win, 'fontReset') }
+        { label: 'Reset Font Size', accelerator: 'CmdOrCtrl+0', click: () => send(win, 'fontReset') },
+        { type: 'separator' },
+        { label: 'Toggle Developer Tools', accelerator: 'CmdOrCtrl+Option+I', click: () => win.webContents.toggleDevTools() }
       ]
     },
 

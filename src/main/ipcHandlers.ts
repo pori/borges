@@ -138,7 +138,10 @@ export function registerIpcHandlers(): void {
       flush()
       if (!event.sender.isDestroyed()) event.sender.send('ai:done')
     } catch (err) {
-      const message = err instanceof Error ? err.message : String(err)
+      console.error('[ai:streamMessage] error:', err)
+      const message = err instanceof Error
+        ? `${err.message}${(err as NodeJS.ErrnoException & { status?: number; url?: string }).status ? ` (HTTP ${(err as NodeJS.ErrnoException & { status?: number }).status})` : ''}`
+        : String(err)
       if (!event.sender.isDestroyed()) event.sender.send('ai:error', message)
     }
   })
