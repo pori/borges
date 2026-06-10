@@ -57,7 +57,7 @@ export function registerIpcHandlers(): void {
   ipcMain.handle('config:read', async () => readGlobalConfig())
   ipcMain.handle('config:write', async (_e, updates: Partial<GlobalConfig>) => {
     writeGlobalConfig(updates)
-    if (updates.apiKey !== undefined) resetClient()
+    resetClient()  // always reset — baseURL or model may have changed
   })
   ipcMain.handle('config:pickFolder', async (event): Promise<string | null> => {
     const win = BrowserWindow.fromWebContents(event.sender)

@@ -1,5 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk'
-import { getApiKey } from './globalConfig'
+import { getApiKey, getAIConfig } from './globalConfig'
 import type { Market } from './fileSystem'
 
 export type AnalysisMode = 'compression' | 'ending' | 'tone' | 'market_fit' | 'chat'
@@ -17,6 +17,9 @@ export interface AIPayload {
   userMessage: string
 }
 
+const DEFAULT_MODEL = 'claude-sonnet-4-6'
+const DEFAULT_PROMPT_MODEL = 'claude-haiku-4-5-20251001'
+
 let _client: Anthropic | null = null
 
 export function resetClient(): void {
@@ -29,7 +32,8 @@ function getClient(): Anthropic {
     if (!apiKey || apiKey === 'your-api-key-here') {
       throw new Error('API key not set. Open Borges → Preferences to configure it.')
     }
-    _client = new Anthropic({ apiKey })
+    const { baseURL } = getAIConfig()
+    _client = new Anthropic({ apiKey, ...(baseURL ? { baseURL } : {}) })
   }
   return _client
 }
@@ -97,8 +101,9 @@ Be candid. If the fit is poor, say so plainly.`
 
 export async function streamPrompt(onChunk: (chunk: string) => void): Promise<void> {
   const client = getClient()
+  const { promptModel } = getAIConfig()
   const stream = client.messages.stream({
-    model: 'claude-haiku-4-5-20251001',
+    model: promptModel ?? DEFAULT_PROMPT_MODEL,
     max_tokens: 120,
     messages: [{
       role: 'user',
@@ -118,6 +123,7 @@ export async function streamMessage(
   onChunk: (chunk: string) => void
 ): Promise<void> {
   const client = getClient()
+  const { model } = getAIConfig()
 
   const messages: Anthropic.MessageParam[] = [
     ...payload.conversationHistory.slice(-10),
@@ -125,7 +131,7 @@ export async function streamMessage(
   ]
 
   const stream = client.messages.stream({
-    model: 'claude-sonnet-4-6',
+    model: model ?? DEFAULT_MODEL,
     max_tokens: 4096,
     system: buildSystemPrompt(payload),
     messages
