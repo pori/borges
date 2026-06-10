@@ -46,6 +46,14 @@ Analysis can optionally include:
 
 ---
 
+## Screenshots
+
+![Dashboard](resources/dashboard.png)
+
+![Editor](resources/editor.png)
+
+---
+
 ## Getting started
 
 ### Requirements
