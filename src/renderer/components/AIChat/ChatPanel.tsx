@@ -1,4 +1,4 @@
-import { useRef, useEffect, useState } from 'react'
+import { useRef, useEffect, useState, useMemo, memo } from 'react'
 import { useBorgesStore } from '../../store/borgesStore'
 import type { ChatMessage, TextAnnotation } from '../../types/borges'
 import { marked } from 'marked'
@@ -11,19 +11,20 @@ function renderMarkdown(text: string): string {
   }
 }
 
-function MessageBubble({ msg }: { msg: ChatMessage }): JSX.Element {
+const MessageBubble = memo(function MessageBubble({ msg }: { msg: ChatMessage }): JSX.Element {
   const isUser = msg.role === 'user'
+  const html = useMemo(() => (isUser ? null : renderMarkdown(msg.content)), [isUser, msg.content])
   return (
     <div className={`chat-message chat-message-${isUser ? 'user' : 'assistant'}`}>
       <div
         className="chat-bubble"
-        dangerouslySetInnerHTML={isUser ? undefined : { __html: renderMarkdown(msg.content) }}
+        dangerouslySetInnerHTML={html !== null ? { __html: html } : undefined}
       >
         {isUser ? msg.content : undefined}
       </div>
     </div>
   )
-}
+})
 
 function parseAnnotationsFromText(text: string, doc: string): TextAnnotation[] {
   const anns: TextAnnotation[] = []
