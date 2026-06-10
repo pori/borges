@@ -59,6 +59,9 @@ contextBridge.exposeInMainWorld('api', {
         ipcRenderer.removeListener('ai:promptError', errorHandler)
         reject(new Error(message))
       }
+      ipcRenderer.removeAllListeners('ai:promptChunk')
+      ipcRenderer.removeAllListeners('ai:promptDone')
+      ipcRenderer.removeAllListeners('ai:promptError')
       ipcRenderer.on('ai:promptChunk', chunkHandler)
       ipcRenderer.on('ai:promptDone', doneHandler)
       ipcRenderer.on('ai:promptError', errorHandler)
