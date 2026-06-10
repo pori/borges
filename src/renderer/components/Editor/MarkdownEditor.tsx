@@ -79,7 +79,7 @@ const markdownHighlight = HighlightStyle.define([
 ])
 
 const IDLE_MS = 2 * 60 * 1000  // 2 min idle ends active-typing interval
-const SESSION_FLUSH_MS = 10 * 60 * 1000  // 10 min total idle flushes session
+const SESSION_FLUSH_MS = 30 * 60 * 1000  // 30 min total idle flushes session
 
 function wordCount(text: string): number {
   return text.trim() === '' ? 0 : text.trim().split(/\s+/).length
