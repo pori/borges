@@ -1,5 +1,7 @@
 import { readdir, readFile, writeFile, mkdir, unlink, rename as fsRename, rm } from 'fs/promises'
+import { existsSync } from 'fs'
 import { join, basename } from 'path'
+import { app } from 'electron'
 import { getCollectionRoot } from './globalConfig'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -61,7 +63,9 @@ export interface TelemetrySession {
 
 // ─── Path helpers ─────────────────────────────────────────────────────────────
 
-const borgesDir = (): string => join(getCollectionRoot(), '.borges')
+// App-internal data lives in userData (~/Library/Application Support/Borges),
+// not in the collection (~/Documents/…), to avoid repeated macOS TCC prompts.
+const borgesDir = (): string => join(app.getPath('userData'), '.borges')
 const configFile = (): string => join(borgesDir(), 'config.json')
 const orderFile = (): string => join(borgesDir(), 'order.json')
 const sessionFile = (): string => join(borgesDir(), 'session.json')
@@ -71,6 +75,16 @@ const revisionsDir = (): string => join(borgesDir(), 'revisions')
 const telemetryFile = (): string => join(borgesDir(), 'telemetry.json')
 
 const MAX_REVISIONS = 50
+
+// One-time migration: move .borges from the old collection location to userData.
+export async function migrateAppData(): Promise<void> {
+  const oldDir = join(getCollectionRoot(), '.borges')
+  const newDir = borgesDir()
+  if (existsSync(oldDir) && !existsSync(newDir)) {
+    await mkdir(join(newDir, '..'), { recursive: true })
+    await fsRename(oldDir, newDir)
+  }
+}
 
 function assertInCollection(filePath: string): void {
   const root = getCollectionRoot()

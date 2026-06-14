@@ -3,6 +3,7 @@ import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import { registerIpcHandlers } from './ipcHandlers'
 import { getCollectionRoot, readGlobalConfig } from './globalConfig'
+import { migrateAppData } from './fileSystem'
 
 app.setName('Borges')
 
@@ -130,7 +131,7 @@ mainWindow.webContents.setWindowOpenHandler((details) => {
   return mainWindow
 }
 
-app.whenReady().then(() => {
+app.whenReady().then(async () => {
   electronApp.setAppUserModelId('com.borges.editor')
 
   if (process.platform === 'darwin') {
@@ -139,6 +140,7 @@ app.whenReady().then(() => {
 
   app.on('browser-window-created', (_, window) => optimizer.watchWindowShortcuts(window))
 
+  await migrateAppData()
   registerIpcHandlers()
   const mainWindow = createWindow()
   buildAppMenu(mainWindow)
