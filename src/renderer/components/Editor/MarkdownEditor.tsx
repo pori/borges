@@ -226,7 +226,10 @@ export function MarkdownEditor(): JSX.Element {
       parent: editorRef.current
     })
     viewRef.current = view
-    const handleBlur = (): void => flushSession()
+    const handleBlur = (): void => {
+      const s = sessionRef.current
+      if (s && Date.now() - s.lastKeystroke >= IDLE_MS) flushSession()
+    }
     window.addEventListener('blur', handleBlur)
     return () => {
       flushSession()
