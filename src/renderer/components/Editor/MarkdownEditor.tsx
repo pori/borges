@@ -128,8 +128,8 @@ export function MarkdownEditor(): JSX.Element {
     const wpm = activeMs > 0 ? Math.round(Math.max(0, typedWords) / (activeMs / 60_000)) : 0
     sessionRef.current = null
     if (flushTimerRef.current) { clearTimeout(flushTimerRef.current); flushTimerRef.current = null }
-    // Only persist if something was actually written
-    if (wordsEnd - s.wordsStart <= 0 && durationMs < 5000) return
+    // Only persist if the user actually typed something
+    if (activeMs === 0) return
     window.api.appendTelemetrySession({
       id: shortId(),
       storyId: s.storyId,
