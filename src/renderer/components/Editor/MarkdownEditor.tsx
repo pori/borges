@@ -122,7 +122,7 @@ export function MarkdownEditor(): JSX.Element {
     const now = Date.now()
     // Close active interval if still ongoing
     const activeMs = s.activeMs + (now - s.lastKeystroke < IDLE_MS ? now - s.intervalStart : 0)
-    const wordsEnd = wordCount(useBorgesStore.getState().activeStoryContent)
+    const wordsEnd = wordCount(viewRef.current?.state.doc.toString() ?? useBorgesStore.getState().activeStoryContent)
     const durationMs = now - s.startedAt
     const typedWords = wordsEnd - s.wordsStart - s.pastedWords
     const wpm = activeMs > 0 ? Math.round(Math.max(0, typedWords) / (activeMs / 60_000)) : 0
