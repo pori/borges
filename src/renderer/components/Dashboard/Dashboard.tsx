@@ -6,6 +6,11 @@ function daysSince(iso: string): number {
   return Math.floor((Date.now() - new Date(iso).getTime()) / 86_400_000)
 }
 
+type StoryRow =
+  | { kind: 'out'; storyId: string; storyTitle: string; storyPath: string; marketName: string; days: number; overdue: boolean }
+  | { kind: 'ready'; storyId: string; storyTitle: string; storyPath: string; wordCount: number }
+  | { kind: 'accepted' | 'rejected'; storyId: string; storyTitle: string; storyPath: string; marketName: string }
+
 export function Dashboard(): JSX.Element {
   const { stories, submissions, markets, setActiveStory, markSaved, isDirty, activeStoryPath, activeStoryContent } = useBorgesStore()
 
@@ -19,26 +24,45 @@ export function Dashboard(): JSX.Element {
     setActiveStory(path, id, content)
   }
 
-  // Stories ready to submit: no active pending, never submitted or last status rejected
-  const readyToSubmit = stories.filter((story) => {
+  const rows: StoryRow[] = []
+
+  // Out: stories with active pending submissions
+  const pendingSubs = submissions
+    .filter((s) => s.status === 'pending' || s.status === 'pending-revision')
+    .sort((a, b) => a.submittedAt.localeCompare(b.submittedAt))
+  for (const sub of pendingSubs) {
+    const story = stories.find((s) => s.id === sub.storyId)
+    const market = markets.find((m) => m.id === sub.marketId)
+    if (!story) continue
+    const days = daysSince(sub.submittedAt)
+    const overdue = !!(market?.responseTimeWeeks && days > market.responseTimeWeeks * 7)
+    rows.push({ kind: 'out', storyId: story.id, storyTitle: story.meta.title || story.id, storyPath: story.path, marketName: market?.name ?? sub.marketId, days, overdue })
+  }
+
+  // Ready: no active pending
+  const outIds = new Set(pendingSubs.map((s) => s.storyId))
+  const readyStories = stories.filter((story) => {
+    if (outIds.has(story.id)) return false
     const storySubs = submissions.filter((s) => s.storyId === story.id)
-    const hasActive = storySubs.some((s) => s.status === 'pending' || s.status === 'pending-revision')
-    if (hasActive) return false
     if (storySubs.length === 0) return true
     const last = storySubs.sort((a, b) => b.submittedAt.localeCompare(a.submittedAt))[0]
     return last.status === 'rejected' || last.status === 'withdrawn'
   })
+  for (const story of readyStories) {
+    rows.push({ kind: 'ready', storyId: story.id, storyTitle: story.meta.title || story.id, storyPath: story.path, wordCount: story.wordCount })
+  }
 
-  // Pending submissions
-  const pending = submissions
-    .filter((s) => s.status === 'pending' || s.status === 'pending-revision')
-    .sort((a, b) => a.submittedAt.localeCompare(b.submittedAt))
-
-  // Recent activity (last 10 non-pending changes)
-  const recent = submissions
+  // Recent activity
+  const recentSubs = submissions
     .filter((s) => s.status === 'accepted' || s.status === 'rejected')
     .sort((a, b) => b.statusUpdatedAt.localeCompare(a.statusUpdatedAt))
-    .slice(0, 10)
+    .slice(0, 8)
+  for (const sub of recentSubs) {
+    const story = stories.find((s) => s.id === sub.storyId)
+    const market = markets.find((m) => m.id === sub.marketId)
+    if (!story) continue
+    rows.push({ kind: sub.status as 'accepted' | 'rejected', storyId: story.id, storyTitle: story.meta.title || story.id, storyPath: story.path, marketName: market?.name ?? sub.marketId })
+  }
 
   const totalWords = stories.reduce((s, story) => s + story.wordCount, 0)
 
@@ -52,73 +76,44 @@ export function Dashboard(): JSX.Element {
       </div>
 
       <div className="dashboard-grid">
-        {/* Ready to submit */}
+        {/* Stories — all statuses in one card */}
         <div className="dashboard-card">
-          <div className="dashboard-card-title">Ready to submit ({readyToSubmit.length})</div>
-          {readyToSubmit.length === 0 && <div className="dashboard-empty">All stories are out or in progress.</div>}
-          {readyToSubmit.slice(0, 8).map((story) => (
-            <div key={story.id} className="dashboard-row" onClick={() => openStory(story.path, story.id)}>
-              <span className="dashboard-row-title">{story.meta.title || story.id}</span>
-              <span className="dashboard-row-meta">{story.wordCount.toLocaleString()}w</span>
+          <div className="dashboard-card-title">Stories</div>
+          {rows.length === 0 && <div className="dashboard-empty">No stories yet.</div>}
+          {rows.map((row, i) => (
+            <div key={i} className="dashboard-row" onClick={() => openStory(row.storyPath, row.storyId)}>
+              <span className="dashboard-row-title">{row.storyTitle}</span>
+              {row.kind === 'out' && (
+                <>
+                  <span className="dashboard-row-meta" style={{ color: 'var(--text2)' }}>{row.marketName}</span>
+                  <span className={row.overdue ? 'dashboard-row-flag' : 'dashboard-row-meta'}>{row.days}d{row.overdue ? ' ⚠' : ''}</span>
+                  <span className="dashboard-status-badge dashboard-status-out">out</span>
+                </>
+              )}
+              {row.kind === 'ready' && (
+                <>
+                  <span className="dashboard-row-meta">{row.wordCount.toLocaleString()}w</span>
+                  <span className="dashboard-status-badge dashboard-status-ready">ready</span>
+                </>
+              )}
+              {row.kind === 'accepted' && (
+                <>
+                  <span className="dashboard-row-meta" style={{ color: 'var(--text2)' }}>{row.marketName}</span>
+                  <span className="dashboard-status-badge dashboard-status-accepted">accepted</span>
+                </>
+              )}
+              {row.kind === 'rejected' && (
+                <>
+                  <span className="dashboard-row-meta" style={{ color: 'var(--text3)' }}>{row.marketName}</span>
+                  <span className="dashboard-status-badge dashboard-status-rejected">rejected</span>
+                </>
+              )}
             </div>
           ))}
         </div>
 
-        {/* Pending submissions */}
-        <div className="dashboard-card">
-          <div className="dashboard-card-title">Out ({pending.length})</div>
-          {pending.length === 0 && <div className="dashboard-empty">Nothing currently submitted.</div>}
-          {pending.map((sub) => {
-            const story = stories.find((s) => s.id === sub.storyId)
-            const market = markets.find((m) => m.id === sub.marketId)
-            const days = daysSince(sub.submittedAt)
-            const isOverdue = market?.responseTimeWeeks && days > market.responseTimeWeeks * 7
-            return (
-              <div key={sub.id} className="dashboard-row" onClick={() => story && openStory(story.path, story.id)}>
-                <span className="dashboard-row-title">{story?.meta.title || sub.storyId} → {market?.name ?? sub.marketId}</span>
-                <span className={`dashboard-row-meta${isOverdue ? ' dashboard-row-flag' : ''}`}>{days}d{isOverdue ? ' ⚠' : ''}</span>
-              </div>
-            )
-          })}
-        </div>
-
-        {/* Recent activity */}
-        <div className="dashboard-card">
-          <div className="dashboard-card-title">Recent activity</div>
-          {recent.length === 0 && <div className="dashboard-empty">No acceptances or rejections yet.</div>}
-          {recent.map((sub) => {
-            const story = stories.find((s) => s.id === sub.storyId)
-            const market = markets.find((m) => m.id === sub.marketId)
-            return (
-              <div key={sub.id} className="dashboard-row" onClick={() => story && openStory(story.path, story.id)}>
-                <span className="dashboard-row-title">{story?.meta.title || sub.storyId}</span>
-                <span className={`dashboard-row-meta`} style={{ color: sub.status === 'accepted' ? 'var(--success)' : 'var(--text3)' }}>
-                  {sub.status === 'accepted' ? '✓' : '✗'} {market?.name ?? sub.marketId}
-                </span>
-              </div>
-            )
-          })}
-        </div>
-
         {/* Writing stats */}
         <WritingStats stories={stories} />
-
-        {/* Word count overview */}
-        <div className="dashboard-card">
-          <div className="dashboard-card-title">Word counts</div>
-          {stories.length === 0 && <div className="dashboard-empty">No stories yet.</div>}
-          {[...stories].sort((a, b) => b.wordCount - a.wordCount).slice(0, 10).map((story) => {
-            const target = story.meta.wordCountTarget
-            return (
-              <div key={story.id} className="dashboard-row" onClick={() => openStory(story.path, story.id)}>
-                <span className="dashboard-row-title">{story.meta.title || story.id}</span>
-                <span className="dashboard-row-meta">
-                  {story.wordCount.toLocaleString()}{target ? `/${target.toLocaleString()}` : ''}
-                </span>
-              </div>
-            )
-          })}
-        </div>
       </div>
     </div>
   )
