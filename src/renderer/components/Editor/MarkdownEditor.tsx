@@ -108,10 +108,12 @@ export function MarkdownEditor(): JSX.Element {
     storyId: string
     startedAt: number
     wordsStart: number
+    pastedWords: number     // words added via paste, excluded from WPM
     activeMs: number        // accumulated active typing ms
     intervalStart: number   // start of current active interval
     lastKeystroke: number   // last doc change timestamp
   } | null>(null)
+  const nextPasteWordsRef = useRef<number>(0)
   const flushTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   function flushSession(): void {
@@ -122,7 +124,8 @@ export function MarkdownEditor(): JSX.Element {
     const activeMs = s.activeMs + (now - s.lastKeystroke < IDLE_MS ? now - s.intervalStart : 0)
     const wordsEnd = wordCount(useBorgesStore.getState().activeStoryContent)
     const durationMs = now - s.startedAt
-    const wpm = activeMs > 0 ? Math.round((wordsEnd - s.wordsStart) / (activeMs / 60_000)) : 0
+    const typedWords = wordsEnd - s.wordsStart - s.pastedWords
+    const wpm = activeMs > 0 ? Math.round(Math.max(0, typedWords) / (activeMs / 60_000)) : 0
     sessionRef.current = null
     if (flushTimerRef.current) { clearTimeout(flushTimerRef.current); flushTimerRef.current = null }
     // Only persist if something was actually written
@@ -149,6 +152,7 @@ export function MarkdownEditor(): JSX.Element {
         storyId,
         startedAt: now,
         wordsStart: wordCount(content),
+        pastedWords: 0,
         activeMs: 0,
         intervalStart: now,
         lastKeystroke: now,
@@ -161,6 +165,10 @@ export function MarkdownEditor(): JSX.Element {
         s.intervalStart = now
       }
       s.lastKeystroke = now
+      if (nextPasteWordsRef.current > 0) {
+        s.pastedWords += nextPasteWordsRef.current
+        nextPasteWordsRef.current = 0
+      }
     }
     // Reset flush-on-idle timer
     if (flushTimerRef.current) clearTimeout(flushTimerRef.current)
@@ -201,6 +209,10 @@ export function MarkdownEditor(): JSX.Element {
             }
           }),
           EditorView.domEventHandlers({
+            paste: (e) => {
+              const text = e.clipboardData?.getData('text') ?? ''
+              if (text) nextPasteWordsRef.current = wordCount(text)
+            },
             contextmenu: (e) => {
               e.preventDefault()
               window.api.showEditorContextMenu()
