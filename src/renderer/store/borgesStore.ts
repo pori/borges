@@ -64,8 +64,8 @@ interface BorgesState {
   setChatOpen: (v: boolean) => void
   focusMode: boolean
   toggleFocusMode: () => void
-  submissionPanelTab: 'story' | 'markets'
-  setSubmissionPanelTab: (tab: 'story' | 'markets') => void
+  mainView: 'editor' | 'markets'
+  setMainView: (view: 'editor' | 'markets') => void
 
   // Theme & font
   theme: 'dark' | 'light'
@@ -212,8 +212,8 @@ export const useBorgesStore = create<BorgesState>((set, get) => ({
   setChatOpen: (v) => { localStorage.setItem('chatOpen', String(v)); set({ chatOpen: v }) },
   focusMode: false,
   toggleFocusMode: () => set((s) => ({ focusMode: !s.focusMode })),
-  submissionPanelTab: 'story',
-  setSubmissionPanelTab: (tab) => set({ submissionPanelTab: tab }),
+  mainView: 'editor',
+  setMainView: (view) => set({ mainView: view }),
 
   theme: 'dark',
   toggleTheme: () => {

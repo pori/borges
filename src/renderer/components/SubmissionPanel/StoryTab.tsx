@@ -15,14 +15,20 @@ export function StoryTab(): JSX.Element {
   const [notesValue, setNotesValue] = useState('')
 
   if (!activeStoryId) {
-    return <div style={{ color: 'var(--text3)', fontSize: '13px', padding: '8px 0' }}>Open a story to see submissions.</div>
+    return (
+      <div className="sub-tab">
+        <div className="sub-tab-body sub-empty">Open a story to see submissions.</div>
+        <div className="sub-tab-footer">
+          <button className="sub-btn" disabled>Submit to market…</button>
+        </div>
+      </div>
+    )
   }
 
   const storySubmissions = submissions
     .filter((s) => s.storyId === activeStoryId)
     .sort((a, b) => b.submittedAt.localeCompare(a.submittedAt))
 
-  const pendingElsewhere = storySubmissions.filter((s) => s.status === 'pending')
   const activeSubs = storySubmissions.filter((s) => s.status === 'pending' || s.status === 'pending-revision')
 
   const simSubWarning = (marketId: string): string | null => {
@@ -75,21 +81,14 @@ export function StoryTab(): JSX.Element {
   const filteredMarkets = markets.filter((m) => m.active && m.name.toLowerCase().includes(marketFilter.toLowerCase()))
 
   return (
-    <div>
-      {activeSubs.length === 0 && pendingElsewhere.length === 0 && (
-        <div style={{ fontSize: '12px', color: 'var(--text3)', marginBottom: '10px' }}>
-          No active submissions.
-        </div>
-      )}
-
-      <button className="sub-btn" onClick={() => setShowPicker(true)} disabled={markets.filter((m) => m.active).length === 0}>
-        Submit to market…
-      </button>
-
-      {storySubmissions.length > 0 && (
-        <>
-          <div className="sub-list-title">Submission history</div>
-          {storySubmissions.map((sub) => {
+    <div className="sub-tab">
+      <div className="sub-tab-body">
+        {storySubmissions.length === 0 ? (
+          <div className="sub-empty">No submissions yet.</div>
+        ) : (
+          <>
+            <div className="sub-list-title">History</div>
+            {storySubmissions.map((sub) => {
             const market = markets.find((m) => m.id === sub.marketId)
             return (
               <div key={sub.id} className="sub-item">
@@ -131,8 +130,15 @@ export function StoryTab(): JSX.Element {
               </div>
             )
           })}
-        </>
-      )}
+          </>
+        )}
+      </div>
+
+      <div className="sub-tab-footer">
+        <button className="sub-btn" onClick={() => setShowPicker(true)} disabled={markets.filter((m) => m.active).length === 0}>
+          Submit to market…
+        </button>
+      </div>
 
       {showPicker && (
         <div className="modal-overlay" onClick={() => setShowPicker(false)}>

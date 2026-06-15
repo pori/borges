@@ -45,7 +45,7 @@ function StoryItem({ story, index, isActive, onClick, onContextMenu, onDragStart
 }
 
 export function StorySidebar(): JSX.Element {
-  const { stories, activeStoryPath, activeStoryId, activeStoryContent, isDirty, setStories, moveStory, markSaved, clearActiveStory } = useBorgesStore()
+  const { stories, activeStoryPath, activeStoryId, activeStoryContent, isDirty, setStories, moveStory, markSaved, clearActiveStory, mainView, setMainView } = useBorgesStore()
   const [search, setSearch] = useState('')
   const [renaming, setRenaming] = useState<string | null>(null)
   const [renameValue, setRenameValue] = useState('')
@@ -63,6 +63,7 @@ export function StorySidebar(): JSX.Element {
     }
     const content = await window.api.readStory(story.path)
     useBorgesStore.getState().setActiveStory(story.path, story.id, content)
+    setMainView('editor')
   }
 
   const handleNew = async (): Promise<void> => {
@@ -109,12 +110,20 @@ export function StorySidebar(): JSX.Element {
     <div className="sidebar">
       <div className="sidebar-header">
         <button
-          className={`sidebar-btn${!activeStoryId ? ' active' : ''}`}
-          onClick={clearActiveStory}
+          className={`sidebar-btn${mainView === 'editor' && !activeStoryId ? ' active' : ''}`}
+          onClick={() => { setMainView('editor'); clearActiveStory() }}
           title="Home"
         >⌂</button>
         <span className="sidebar-title">Stories</span>
         <button className="sidebar-btn" onClick={handleNew} title="New story">+</button>
+      </div>
+      <div className="sidebar-nav">
+        <button
+          className={`sidebar-nav-btn${mainView === 'markets' ? ' active' : ''}`}
+          onClick={() => { setMainView('markets'); clearActiveStory() }}
+        >
+          Markets
+        </button>
       </div>
       <div className="sidebar-search">
         <input

@@ -178,12 +178,17 @@ textarea { resize: vertical; }
 .sidebar-title { font-size: 11px; font-weight: 600; color: var(--text2); text-transform: uppercase; letter-spacing: 0.06em; flex: 1; }
 .sidebar-btn { width: 24px; height: 24px; border-radius: 4px; color: var(--text2); font-size: 16px; display: flex; align-items: center; justify-content: center; }
 .sidebar-btn:hover { color: var(--text); background: var(--bg3); }
+.sidebar-btn.active { color: var(--accent); }
 .sidebar-search {
   padding: 6px 8px;
   border-bottom: 1px solid var(--border);
   flex-shrink: 0;
 }
 .sidebar-search input { width: 100%; font-size: 12px; }
+.sidebar-nav { padding: 4px 8px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+.sidebar-nav-btn { width: 100%; text-align: left; padding: 4px 8px; border-radius: 4px; font-size: 12px; color: var(--text2); }
+.sidebar-nav-btn:hover { color: var(--text); background: var(--bg3); }
+.sidebar-nav-btn.active { color: var(--accent); background: color-mix(in srgb, var(--accent) 12%, transparent); }
 .sidebar-list { flex: 1; overflow-y: auto; padding: 4px 0; }
 
 /* Story item */
@@ -470,27 +475,33 @@ textarea { resize: vertical; }
   grid-area: subpanel;
   display: flex;
   flex-direction: column;
+  height: 100%;
   background: var(--bg2);
   border-left: 1px solid var(--border);
   overflow: hidden;
   min-width: 0;
 }
-.sub-panel-tabs {
+.sub-panel-header {
   display: flex;
+  align-items: center;
+  height: 38px;
+  padding: 0 12px;
   border-bottom: 1px solid var(--border);
   flex-shrink: 0;
 }
-.sub-panel-tab {
-  flex: 1;
-  height: 38px;
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--text3);
-  border-bottom: 2px solid transparent;
-  transition: color 0.12s, border-color 0.12s;
+.sub-panel-title { font-size: 11px; font-weight: 600; color: var(--text2); text-transform: uppercase; letter-spacing: 0.06em; }
+.sub-panel-body { flex: 1; overflow: hidden; display: flex; flex-direction: column; }
+.sub-tab { display: flex; flex-direction: column; flex: 1; }
+.sub-tab-body { flex: 1; overflow-y: auto; padding: 12px; }
+.sub-tab-footer {
+  border-top: 1px solid var(--border);
+  padding: 10px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
-.sub-panel-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
-.sub-panel-body { flex: 1; overflow-y: auto; padding: 12px; }
+.sub-empty { font-size: 12px; color: var(--text3); }
 
 /* Submissions list */
 .sub-list-title { font-size: 11px; font-weight: 600; color: var(--text2); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 8px; }
@@ -511,13 +522,12 @@ textarea { resize: vertical; }
 .sub-warn { font-size: 12px; color: var(--warn); padding: 6px; background: rgba(180, 130, 60, 0.1); border-radius: 4px; margin-bottom: 8px; }
 .sub-btn {
   width: 100%;
-  height: 32px;
-  border-radius: 5px;
+  height: 36px;
+  border-radius: 6px;
   font-size: 13px;
   font-weight: 500;
   background: var(--accent);
   color: var(--bg);
-  margin-bottom: 12px;
   transition: opacity 0.12s;
 }
 .sub-btn:hover { opacity: 0.85; }
@@ -552,6 +562,8 @@ textarea { resize: vertical; }
 .form-row { display: flex; gap: 8px; }
 .form-row .form-field { flex: 1; }
 .form-actions { display: flex; gap: 8px; margin-top: 12px; }
+.form-checkbox { display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 12px; color: var(--text2); margin-bottom: 10px; }
+.form-checkbox input[type="checkbox"] { width: auto; flex-shrink: 0; }
 .btn-primary {
   flex: 1; height: 30px; border-radius: 4px;
   background: var(--accent); color: var(--bg); font-weight: 600; font-size: 12px;
@@ -564,6 +576,45 @@ textarea { resize: vertical; }
 }
 .btn-secondary:hover { color: var(--text); }
 .btn-danger { height: 30px; padding: 0 12px; border-radius: 4px; background: var(--danger); color: #fff; font-size: 12px; }
+
+/* ── Markets view (main area) ─────────────────────────────────────────────── */
+.mv-layout { display: flex; flex-direction: column; height: 100%; overflow: hidden; }
+.mv-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 20px 32px 16px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.mv-title { font-size: 18px; font-weight: 700; color: var(--text); }
+.mv-body { flex: 1; overflow-y: auto; padding: 24px 32px; }
+.mv-empty { color: var(--text3); font-size: 13px; }
+.mv-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 12px;
+}
+.mv-card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px 16px;
+}
+.mv-card--inactive { opacity: 0.5; }
+.mv-card-top { display: flex; align-items: flex-start; gap: 8px; margin-bottom: 6px; }
+.mv-card-name { font-size: 14px; font-weight: 600; flex: 1; }
+.mv-card-edit { font-size: 11px; padding: 2px 8px; border-radius: 3px; background: var(--bg3); border: 1px solid var(--border); color: var(--text2); flex-shrink: 0; }
+.mv-card-edit:hover { color: var(--text); border-color: var(--text3); }
+.mv-card-meta { font-size: 12px; color: var(--text3); margin-bottom: 4px; }
+.mv-card-genres { font-size: 11px; color: var(--text3); margin-bottom: 4px; }
+.mv-card-url { font-size: 11px; color: var(--accent); display: block; margin-bottom: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mv-card-notes { font-size: 12px; color: var(--text2); margin-top: 6px; border-top: 1px solid var(--border); padding-top: 6px; }
+.mv-card-subs { font-size: 11px; color: var(--text3); margin-top: 6px; }
+.mv-badge-inactive { font-size: 10px; font-weight: 600; color: var(--text3); padding: 1px 5px; background: var(--bg3); border-radius: 3px; margin-left: 6px; }
+.mv-badge-selected { font-size: 10px; font-weight: 600; color: var(--accent); padding: 1px 5px; background: color-mix(in srgb, var(--accent) 15%, transparent); border-radius: 3px; margin-left: 6px; }
+.mv-form-wrap { max-width: 480px; }
+.mv-add-btn { flex: none; padding: 0 14px; }
+.mv-form { padding: 0; }
+.mv-form-title { font-size: 16px; font-weight: 600; margin-bottom: 16px; }
 
 /* Market picker modal */
 .modal-overlay {

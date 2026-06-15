@@ -6,6 +6,7 @@ import { AnalysisToolbar } from './components/Toolbar/AnalysisToolbar'
 import { SubmissionPanel } from './components/SubmissionPanel/SubmissionPanel'
 import { ChatPanel } from './components/AIChat/ChatPanel'
 import { Dashboard } from './components/Dashboard/Dashboard'
+import { MarketsView } from './components/MarketsView/MarketsView'
 import { SettingsDialog } from './components/Settings/SettingsDialog'
 
 export default function App(): JSX.Element {
@@ -21,6 +22,7 @@ export default function App(): JSX.Element {
     setMarkets,
     setSubmissions,
     revisionPanelOpen, toggleRevisionPanel,
+    mainView,
     initPrefs, loadSession
   } = useBorgesStore()
 
@@ -186,7 +188,9 @@ export default function App(): JSX.Element {
 
       {/* Editor area */}
       <main className="editor-area">
-        {activeStoryId ? (
+        {mainView === 'markets' ? (
+          <MarketsView />
+        ) : activeStoryId ? (
           <>
             {aiEnabled && <AnalysisToolbar />}
             <MarkdownEditor />
