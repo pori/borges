@@ -28,6 +28,7 @@ interface MarketFormProps {
 
 function MarketForm({ market, isNew, onSave, onCancel, onDelete }: MarketFormProps): JSX.Element {
   const [form, setForm] = useState<Market>({ ...market })
+  const [genresRaw, setGenresRaw] = useState<string>(market.genres.join(', '))
   const update = <K extends keyof Market>(key: K, value: Market[K]): void => setForm((f) => ({ ...f, [key]: value }))
 
   const handleSave = (): void => {
@@ -72,7 +73,12 @@ function MarketForm({ market, isNew, onSave, onCancel, onDelete }: MarketFormPro
       </div>
       <div className="form-field">
         <label className="form-label">Genres (comma-separated)</label>
-        <input value={form.genres.join(', ')} onChange={(e) => update('genres', e.target.value.split(',').map((g) => g.trim()).filter(Boolean))} placeholder="flash, micro, speculative" />
+        <input
+          value={genresRaw}
+          onChange={(e) => setGenresRaw(e.target.value)}
+          onBlur={(e) => update('genres', e.target.value.split(',').map((g) => g.trim()).filter(Boolean))}
+          placeholder="flash, micro, speculative"
+        />
       </div>
       <div className="form-field">
         <label className="form-label">Notes / editor preferences</label>
