@@ -39,6 +39,7 @@ contextBridge.exposeInMainWorld('api', {
   loadRevision: (path: string, id: string): Promise<string> => ipcRenderer.invoke('revisions:load', path, id),
 
   // Config
+  isAIEnabled: (): Promise<boolean> => ipcRenderer.invoke('config:isAIEnabled'),
   readConfig: (): Promise<GlobalConfig> => ipcRenderer.invoke('config:read'),
   writeConfig: (updates: Partial<GlobalConfig>): Promise<void> => ipcRenderer.invoke('config:write', updates),
   pickFolder: (): Promise<string | null> => ipcRenderer.invoke('config:pickFolder'),

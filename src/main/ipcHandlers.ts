@@ -11,7 +11,7 @@ import {
 import type { Market, Submission, StoryMeta, TelemetrySession } from './fileSystem'
 import { streamMessage, streamPrompt, resetClient } from './aiService'
 import type { AIPayload } from './aiService'
-import { readGlobalConfig, writeGlobalConfig } from './globalConfig'
+import { readGlobalConfig, writeGlobalConfig, getApiKey } from './globalConfig'
 import type { GlobalConfig } from './globalConfig'
 
 export function registerIpcHandlers(): void {
@@ -54,6 +54,7 @@ export function registerIpcHandlers(): void {
   ipcMain.handle('telemetry:read', async () => readTelemetry())
 
   // ── Config ────────────────────────────────────────────────────────────────────
+  ipcMain.handle('config:isAIEnabled', async () => !!getApiKey())
   ipcMain.handle('config:read', async () => readGlobalConfig())
   ipcMain.handle('config:write', async (_e, updates: Partial<GlobalConfig>) => {
     writeGlobalConfig(updates)

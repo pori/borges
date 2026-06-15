@@ -25,7 +25,7 @@ export default function App(): JSX.Element {
   } = useBorgesStore()
 
   const [settingsOpen, setSettingsOpen] = useState(false)
-  const [, setIsFirstRun] = useState(false)
+  const [aiEnabled, setAiEnabled] = useState(false)
 
   // Initialise app
   useEffect(() => {
@@ -40,11 +40,7 @@ export default function App(): JSX.Element {
       setMarkets(marketsList)
       setSubmissions(subsList)
       await loadSession()
-      const cfg = await window.api.readConfig()
-      if (!cfg.apiKey) {
-        setIsFirstRun(true)
-        setSettingsOpen(true)
-      }
+      setAiEnabled(await window.api.isAIEnabled())
     }
     init()
   }, [])
@@ -146,12 +142,16 @@ export default function App(): JSX.Element {
               onClick={() => toggleSeg('sub')}
               title={submissionPanelOpen ? 'Hide submission panel' : 'Show submission panel'}
             />
-            <div className="app-layout-toggle-seg app-layout-toggle-seg--mid" style={{ width: '4px' }} />
-            <button
-              className={`app-layout-toggle-seg${chatOpen ? ' active' : ''}`}
-              onClick={() => toggleSeg('chat')}
-              title={chatOpen ? 'Hide AI chat' : 'Show AI chat'}
-            />
+            {aiEnabled && (
+              <>
+                <div className="app-layout-toggle-seg app-layout-toggle-seg--mid" style={{ width: '4px' }} />
+                <button
+                  className={`app-layout-toggle-seg${chatOpen ? ' active' : ''}`}
+                  onClick={() => toggleSeg('chat')}
+                  title={chatOpen ? 'Hide AI chat' : 'Show AI chat'}
+                />
+              </>
+            )}
           </div>
           <button
             className={`app-titlebar-btn${revisionPanelOpen ? ' active' : ''}`}
@@ -188,11 +188,11 @@ export default function App(): JSX.Element {
       <main className="editor-area">
         {activeStoryId ? (
           <>
-            <AnalysisToolbar />
+            {aiEnabled && <AnalysisToolbar />}
             <MarkdownEditor />
           </>
         ) : (
-          <Dashboard />
+          <Dashboard aiEnabled={aiEnabled} />
         )}
       </main>
 
@@ -202,9 +202,11 @@ export default function App(): JSX.Element {
       </aside>
 
       {/* Chat panel */}
-      <aside className="chat-area">
-        <ChatPanel />
-      </aside>
+      {aiEnabled && (
+        <aside className="chat-area">
+          <ChatPanel />
+        </aside>
+      )}
 
 
 {/* Settings */}

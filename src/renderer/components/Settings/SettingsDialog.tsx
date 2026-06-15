@@ -10,7 +10,6 @@ type Tab = 'general' | 'editor' | 'collection'
 export function SettingsDialog({ onClose }: Props): JSX.Element {
   const { theme, fontSize, setFontSize } = useBorgesStore()
   const [tab, setTab] = useState<Tab>('general')
-  const [apiKey, setApiKey] = useState('')
   const [collectionPath, setCollectionPath] = useState('')
   const [defaultTarget, setDefaultTarget] = useState('')
   const [collectionContext, setCollectionContext] = useState('')
@@ -18,7 +17,6 @@ export function SettingsDialog({ onClose }: Props): JSX.Element {
 
   useEffect(() => {
     window.api.readConfig().then((cfg) => {
-      setApiKey(cfg.apiKey ?? '')
       setCollectionPath(cfg.collectionPath ?? '')
       setDefaultTarget(String(cfg.defaultWordCountTarget ?? ''))
     })
@@ -30,7 +28,6 @@ export function SettingsDialog({ onClose }: Props): JSX.Element {
   const save = async (): Promise<void> => {
     setSaving(true)
     await window.api.writeConfig({
-      apiKey: apiKey.trim() || undefined,
       collectionPath: collectionPath || undefined,
       defaultWordCountTarget: defaultTarget ? parseInt(defaultTarget) : undefined,
       theme
@@ -66,16 +63,6 @@ export function SettingsDialog({ onClose }: Props): JSX.Element {
             {tab === 'general' && (
               <div>
                 <div className="settings-section-title">General</div>
-                <div className="settings-field">
-                  <label className="settings-label">Anthropic API key</label>
-                  <input
-                    type="password"
-                    value={apiKey}
-                    onChange={(e) => setApiKey(e.target.value)}
-                    placeholder="sk-ant-…"
-                  />
-                  <div className="settings-hint">Used for all AI features (Compression, Ending, Tone, Market fit).</div>
-                </div>
                 <div className="settings-field">
                   <label className="settings-label">Collection folder</label>
                   <div className="settings-field-row">
@@ -121,10 +108,10 @@ export function SettingsDialog({ onClose }: Props): JSX.Element {
                     className="context-textarea"
                     value={collectionContext}
                     onChange={(e) => setCollectionContext(e.target.value)}
-                    placeholder="Describe the themes, aesthetic, and goals of your collection. This is injected into AI prompts when 'Collection context' is enabled."
+                    placeholder="Describe the themes, aesthetic, and goals of your collection."
                     rows={8}
                   />
-                  <div className="settings-hint">Enable via the 'Collection' toggle in the analysis toolbar.</div>
+                  <div className="settings-hint">Used when the 'Collection' context toggle is enabled.</div>
                 </div>
               </div>
             )}

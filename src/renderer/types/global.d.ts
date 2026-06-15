@@ -55,6 +55,7 @@ declare global {
       loadRevision(path: string, id: string): Promise<string>
       appendTelemetrySession(session: TelemetrySession): Promise<void>
       readTelemetry(): Promise<TelemetrySession[]>
+      isAIEnabled(): Promise<boolean>
       readConfig(): Promise<GlobalConfig>
       writeConfig(updates: Partial<GlobalConfig>): Promise<void>
       pickFolder(): Promise<string | null>

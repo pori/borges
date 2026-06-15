@@ -11,7 +11,7 @@ type StoryRow =
   | { kind: 'ready'; storyId: string; storyTitle: string; storyPath: string; wordCount: number }
   | { kind: 'accepted' | 'rejected'; storyId: string; storyTitle: string; storyPath: string; marketName: string }
 
-export function Dashboard(): JSX.Element {
+export function Dashboard({ aiEnabled }: { aiEnabled: boolean }): JSX.Element {
   const { stories, submissions, markets, setActiveStory, markSaved, isDirty, activeStoryPath, activeStoryContent } = useBorgesStore()
 
   const openStory = async (path: string, id: string): Promise<void> => {
@@ -68,7 +68,7 @@ export function Dashboard(): JSX.Element {
 
   return (
     <div className="dashboard">
-      <PromptHero />
+      {aiEnabled && <PromptHero />}
       <div className="dashboard-greeting">
         {stories.length === 0
           ? 'Welcome to Borges. Create your first story to get started.'
